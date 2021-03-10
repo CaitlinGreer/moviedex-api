@@ -5,11 +5,10 @@ const cors = require('cors')
 const helmet = require('helmet')
 const MOVIEDEX = require('./moviedex.json')
 
-console.log(process.env.API_TOKEN)
-
 const app = express()
 
-app.use(morgan('dev'))
+
+app.use(morgan('common'))
 app.use(helmet())
 app.use(cors())
 
@@ -36,7 +35,7 @@ function handleGetMovies(req, res) {
     //filter movies by country, country search includes specified string (case insensitive)
     if(req.query.country) {
         response = response.filter(movie => 
-            movie.country.toLowerCase().includes(req.query.genre.toLowerCase())
+            movie.country.toLowerCase().includes(req.query.country.toLowerCase())
         )
     }
 
@@ -51,7 +50,17 @@ function handleGetMovies(req, res) {
 
 app.get('/movie', handleGetMovies)
 
-const PORT = 8000
+app.use((error, req, res, next) => {
+    let response
+    if (process.env.NODE_ENV === 'production') {
+        response = { error: { message: 'server error' }}
+    } else {
+        response = { error }
+    }
+    res.status(500).json(response)
+})
+
+const PORT = process.env.PORT || 8000
 
 app.listen(PORT, () => {
     console.log(`Server listening at http://localhost:${PORT}`)
